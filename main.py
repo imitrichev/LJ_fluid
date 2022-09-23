@@ -1,5 +1,5 @@
 from numpy import multiply, exp, negative, divide, log, subtract, empty
-
+#пустой коммент
 
 def viscosity(x, mw_i, nu_i, t):
     kb = 1.380649 * 1e-23
