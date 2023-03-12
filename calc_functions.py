@@ -1,7 +1,7 @@
 from math import exp
 from dataclasses import dataclass
-from numpy import ones
-from scipy.optimize import least_squares
+from numpy import ones, array
+from scipy.optimize import minimize
 
 
 @dataclass
@@ -19,22 +19,50 @@ class ParamsG:
 
 
 class VFT:
-    pref = 0.128
 
-    def setupDEF(self):
-        self.D, self.E, self.F = least_squares(aadDEF, ones(3), method='lm').x
+    def __init__(self, temps, visc_pref, x0):
+        self.temps = temps
+        self.visc_pref = visc_pref
+        self.params = [0, 0, 0, 0, 0, 0, 0]
+        self.x0 = x0
+        self.setup_def()
 
-    def setupHG(self):
-        self.G0, self.G1, self.G2, self.H = least_squares(aadHG, ones(4), args=([self.D, self.E, self.F, self.pref]),
-                                                          method='lm').x
+    def setup_def(self):
+        args = (self.temps, self.visc_pref)
+        test = minimize(fun=aadDEF, x0=self.x0[:3], args=args)
+        self.params[0], self.params[1], self.params[2] = test.x
 
-    def __init__(self):
-        self.setupDEF()
-        self.setupHG()
+    def setup_hg(self):
+        self.params[3], self.params[4], self.params[5], self.params[6] = minimize(aadHG, self.x0[3:], args=(
+            [self.params[0], self.params[1], self.params[2], self.pref]), method='lm').x
+
+    def calc_visc_def(self, t):
+        return DEF(self.params[0], self.params[1], self.params[2], t)
 
     def calcVisc(self, t, p):
-        return self.D * ((p + self.G0 + self.G1 * t + self.G2 * t ** 2) / (
-                    self.pref + self.G0 + self.G1 * t + self.G2 * t ** 2)) ** self.H * exp(self.E / (t - self.F))
+        return HG(self.params[3], self.params[4], self.params[5], self.params[6], self.params[0], self.params[1],
+                  self.params[2], t, p, self.pref)
+
+
+class Density:
+    def __init__(self, rho0, temp0, p0):
+        self.rho0 = rho0
+        self.temp0 = temp0
+        self.p0 = p0
+        self.beta = 0
+        self.e = 0
+
+    def calc_rho1(self, t):
+        return self.rho0 / (1 + self.beta * (t - self.temp0))
+
+    def aad_rho1(self, beta, temp, rho):
+        rho_calc = [self.rho0 / (1 + beta * (i - self.temp0)) for i in temp]
+        return aad(rho, rho_calc)
+
+    def setup_rho1(self, temps, rho):
+        args = (temps, rho)
+        test = minimize(fun=self.aad_rho1, x0=[0], args=args)
+        self.beta = test.x[0]
 
 
 def aad(x_exp, x_calc):
@@ -46,15 +74,14 @@ def aad(x_exp, x_calc):
     return returnable
 
 
-def DEF(d, e, f, temp):
-    return d * exp(e / (f - temp))
+def DEF(d, e, f, t):
+    return d * exp(e / (f - (t + 273.15)))
 
 
-def aadDEF(x):
-    temp = [125, 100, 80, 60, 40, 0, -20]
-    visc = [1.9, 3.231, 4.982, 9.158, 21.987, 413.875, 209.777]
+def aadDEF(x, temp, visc):
     visccalc = [DEF(x[0], x[1], x[2], temp[i]) for i in range(len(temp))]
-    return aad(visc, visccalc), 0, 0
+    aad_calc = aad(visc, visccalc)
+    return aad_calc
 
 
 # Замена наименований параметров в связи с требованиями scipy
