@@ -73,8 +73,9 @@ def aadHG(x, d, e, f, pref):
 
 if __name__ == "__main__":
     visc = {}
-    for file in listdir('R115'):
-        with open("R115\\" + file, "r") as f:
+    substance = "R22"
+    for file in listdir(substance):
+        with open(substance + "\\" + file, "r") as f:
             text = f.read()
             p = float(file[:-4])
             visc[p] = {}
