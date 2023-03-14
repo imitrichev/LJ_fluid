@@ -1,7 +1,10 @@
 from math import exp
 from dataclasses import dataclass
-from numpy import ones, array
+from common import aad
 from scipy.optimize import minimize
+from os import listdir
+import matplotlib.pyplot as plt
+from numpy import arange
 
 
 @dataclass
@@ -20,11 +23,12 @@ class ParamsG:
 
 class VFT:
 
-    def __init__(self, temps, visc_pref, x0):
+    def __init__(self, temps, visc_pref, x0, pref=0):
         self.temps = temps
         self.visc_pref = visc_pref
         self.params = [0, 0, 0, 0, 0, 0, 0]
         self.x0 = x0
+        self.pref = pref
         self.setup_def()
 
     def setup_def(self):
@@ -42,36 +46,6 @@ class VFT:
     def calcVisc(self, t, p):
         return HG(self.params[3], self.params[4], self.params[5], self.params[6], self.params[0], self.params[1],
                   self.params[2], t, p, self.pref)
-
-
-class Density:
-    def __init__(self, rho0, temp0, p0):
-        self.rho0 = rho0
-        self.temp0 = temp0
-        self.p0 = p0
-        self.beta = 0
-        self.e = 0
-
-    def calc_rho1(self, t):
-        return self.rho0 / (1 + self.beta * (t - self.temp0))
-
-    def aad_rho1(self, beta, temp, rho):
-        rho_calc = [self.rho0 / (1 + beta * (i - self.temp0)) for i in temp]
-        return aad(rho, rho_calc)
-
-    def setup_rho1(self, temps, rho):
-        args = (temps, rho)
-        test = minimize(fun=self.aad_rho1, x0=[0], args=args)
-        self.beta = test.x[0]
-
-
-def aad(x_exp, x_calc):
-    assert (len(x_exp) == len(x_calc))
-    returnable = 0
-    for i in range(len(x_exp)):
-        returnable += abs((x_exp[i] - x_calc[i]) / x_exp[i])
-    returnable *= 100 / len(x_exp)
-    return returnable
 
 
 def DEF(d, e, f, t):
@@ -97,13 +71,30 @@ def aadHG(x, d, e, f, pref):
     return aad(visc, visccalc), 0, 0, 0
 
 
-def test(x):
-    returnable = 0
-    for i in range(len(x)):
-        returnable += x[i] ** 2 - i + 1
-    return returnable
-
-
 if __name__ == "__main__":
-    a = VFT()
-    print(a.calcVisc(60, 0.129))
+    visc = {}
+    for file in listdir('R115'):
+        with open("R115\\" + file, "r") as f:
+            text = f.read()
+            p = float(file[:-4])
+            visc[p] = {}
+            for line in text.split('\n'):
+                cur_line = line.split(' ')
+                visc[p][float(cur_line[0])] = float(cur_line[-1])
+
+    x0 = [10, 1000, 100, 0, 0, 0, 0]
+    p0 = 0.8
+    temps = list(visc[p0].keys())
+    visc = list(visc[p0].values())
+    test = VFT(temps, visc, x0)
+    print(test.params[0])
+    print(test.params[1])
+    print(test.params[2])
+
+    t_np = arange(temps[0], temps[-1], 0.5)
+
+    fig, ax = plt.subplots()
+    ax.plot(temps, visc, "b", label="Expected")
+    ax.plot(t_np, [test.calc_visc_def(i) for i in t_np], "r", label="Calculated")
+    plt.legend()
+    plt.show()
