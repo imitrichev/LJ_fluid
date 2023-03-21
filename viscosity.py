@@ -1,7 +1,7 @@
 from math import exp
 from dataclasses import dataclass
 from common import aad
-from scipy.optimize import minimize
+from scipy.optimize import minimize, Bounds
 from os import listdir
 import matplotlib.pyplot as plt
 from numpy import arange
@@ -26,19 +26,20 @@ class VFT:
     def __init__(self, temps, visc_pref, x0, pref=0):
         self.temps = temps
         self.visc_pref = visc_pref
-        self.params = [0, 0, 0, 0, 0, 0, 0]
-        self.x0 = x0
+        self.params = x0.copy()
+        self.x0 = x0.copy()
         self.pref = pref
         self.setup_def()
 
     def setup_def(self):
         args = (self.temps, self.visc_pref)
-        test = minimize(fun=aadDEF, x0=self.x0[:3], args=args)
+        test = minimize(fun=aadDEF, x0=self.x0[:3], method='Powell', args=args, tol=1e-15,
+                        bounds=[(1e-7, 1e-4), (0, 646), (0, 273)])
         self.params[0], self.params[1], self.params[2] = test.x
 
     def setup_hg(self):
         self.params[3], self.params[4], self.params[5], self.params[6] = minimize(aadHG, self.x0[3:], args=(
-            [self.params[0], self.params[1], self.params[2], self.pref]), method='lm').x
+            [self.params[0], self.params[1], self.params[2], self.pref])).x
 
     def calc_visc_def(self, t):
         return DEF(self.params[0], self.params[1], self.params[2], t)
@@ -49,12 +50,14 @@ class VFT:
 
 
 def DEF(d, e, f, t):
-    return d * exp(e / (f - (t + 273.15)))
+    test = d * exp(e / ((t + 273.15) - f))
+    return test
 
 
 def aadDEF(x, temp, visc):
     visccalc = [DEF(x[0], x[1], x[2], temp[i]) for i in range(len(temp))]
     aad_calc = aad(visc, visccalc)
+    print("AAD = %f" % aad_calc)
     return aad_calc
 
 
@@ -83,8 +86,8 @@ if __name__ == "__main__":
                 cur_line = line.split(' ')
                 visc[p][float(cur_line[0])] = float(cur_line[-1])
 
-    x0 = [10, 1000, 100, 0, 0, 0, 0]
-    p0 = 0.8
+    x0 = [0.1, 800, 170, 0, 0, 0, 0]
+    p0 = 0.04
     temps = list(visc[p0].keys())
     visc = list(visc[p0].values())
     test = VFT(temps, visc, x0)

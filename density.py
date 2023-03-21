@@ -23,8 +23,12 @@ class Density:
             e = self.e
         return self.rho0 / (1 - (p - self.p0) / e)
 
-    def calc_rho_full(self, p, t):
-        return (self.rho0 / (1 + self.beta * (t - self.t0))) / (1 - (p - self.p0) / self.e)
+    def calc_rho_full(self, p, t, e=None, beta=None):
+        if not e:
+            e = self.e
+        if not beta:
+            beta = self.beta
+        return (self.rho0 / (1 + beta * (t - self.t0))) / (1 - (p - self.p0) / e)
 
     def aad_rho1(self, beta, temp, rho):
         rho_calc = [self.calc_rho1(i, beta) for i in temp]
@@ -32,7 +36,19 @@ class Density:
 
     def aad_rho2(self, e, p, rho):
         rho_calc = [self.calc_rho2(i, e) for i in p]
-        test = aad(rho, rho_calc)
+        return aad(rho, rho_calc)
+
+    def aad_rho_full(self, params, rho):
+        e = params[0]
+        beta = params[1]
+        rho_calc = []
+        rho_exp = []
+        for p_cur in list(rho.keys()):
+            for t_cur in list(rho[p_cur].keys()):
+                rho_calc.append(self.calc_rho_full(p_cur, t_cur, e, beta))
+                rho_exp.append(rho[p_cur][t_cur])
+        test = aad(rho_calc, rho_exp)
+        print(test)
         return test
 
     def setup_rho1(self, temps, rho):
@@ -45,10 +61,19 @@ class Density:
         test = minimize(fun=self.aad_rho2, x0=3, args=args)
         self.e = test.x[0]
 
+    def setup_rho_full(self, rho):
+        args = (rho)
+        test = minimize(fun=self.aad_rho_full, method='Nelder-Mead', x0=[3, 0], args=args)
+        self.e = test.x[0]
+        self.beta = test.x[1]
+
 
 if __name__ == "__main__":
+    # Оптимизация по двум параметрам одновременно
+    # t: -100>>0
+    # Давления ниже, 0.1 MPa и ниже
     rho = {}
-    substance = "R22"
+    substance = "R115"
     for file in listdir(substance):
         with open(substance + "\\" + file, "r") as f:
             text = f.read()
@@ -58,21 +83,26 @@ if __name__ == "__main__":
                 cur_line = line.split(' ')
                 rho[p][float(cur_line[0])] = float(cur_line[2])
     p = list(rho.keys())
-    rho_p_dynamic = [rho[i][80] for i in p]
     graph_numb = [0, 0]
-    p0 = 1
+    p0 = 0.05
     temps = list(rho[p0].keys())
-    t0 = 80
+    t0 = -79.12
+    rho_p_dynamic = [rho[i][t0] for i in p]
     rho_t = list(rho[p0].values())
     rho_p = [rho[i][t0] for i in p]
     rho0 = rho[p0][t0]
     test = Density(rho0, t0, p0)
-    test.setup_rho1(temps, rho_t)
-    test.setup_rho2(p, rho_p)
+    test.setup_rho_full(rho)
     print(test.e)
     print(test.aad_rho2(test.e, p, rho_p))
     fig, ax = plt.subplots(2, 4)
-    ax[0][0].plot(arange(0.3, 3.1, 0.1), [test.calc_rho2(i) for i in arange(0.3, 3.1, 0.1)], "r", label="Calculated")
+
+    t_exp = list(rho[p0].keys())
+    t_calc = arange(t_exp[0], t_exp[-1], 0.5)
+    ax[0][0].plot(t_exp, list(rho[p0].values()), "b")
+    ax[0][0].plot(t_calc, [test.calc_rho1(i) for i in t_calc], "r")
+
+    '''ax[0][0].plot(arange(0.3, 3.1, 0.1), [test.calc_rho2(i) for i in arange(0.3, 3.1, 0.1)], "r", label="Calculated")
     ax[0][0].plot(p, [rho[i][80] for i in p], 'b', label="Expected")
     ax[0][0].set_title("Rho(p)")
     for i in range(len(p)):
@@ -86,5 +116,5 @@ if __name__ == "__main__":
         ax[graphy][graphx].set_title("P = %f" % p_cur)
     print("Beta = %f" % test.beta)
     print("E = %f" % test.e)
-    plt.legend()
+    plt.legend()'''
     plt.show()
