@@ -7,34 +7,19 @@ import matplotlib.pyplot as plt
 from numpy import arange
 
 
-@dataclass
-class ParamsDEF:
-    d: float
-    e: float
-    f: float
-
-
-@dataclass
-class ParamsG:
-    g0: float
-    g1: float
-    g2: float
-
-
 class VFT:
-
     def __init__(self, temps, visc_pref, x0, pref=0):
         self.temps = temps
         self.visc_pref = visc_pref
         self.params = x0.copy()
-        self.x0 = x0.copy()
+        self.x0 = x0
         self.pref = pref
         self.setup_def()
 
     def setup_def(self):
         args = (self.temps, self.visc_pref)
-        test = minimize(fun=aadDEF, x0=self.x0[:3], method='Powell', args=args, tol=1e-15,
-                        bounds=[(1e-7, 1e-4), (0, 646), (0, 273)])
+        test = minimize(fun=aadDEF, x0=self.x0[:3], method='Powell', args=args, tol=1e-3, bounds=[[0.1, 100], [0, 300], [100, 700]])
+        print(test.message)
         self.params[0], self.params[1], self.params[2] = test.x
 
     def setup_hg(self):
@@ -50,6 +35,11 @@ class VFT:
 
 
 def DEF(d, e, f, t):
+
+
+    d *= 1e6
+
+
     test = d * exp(e / ((t + 273.15) - f))
     return test
 
@@ -57,7 +47,8 @@ def DEF(d, e, f, t):
 def aadDEF(x, temp, visc):
     visccalc = [DEF(x[0], x[1], x[2], temp[i]) for i in range(len(temp))]
     aad_calc = aad(visc, visccalc)
-    print("AAD = %f" % aad_calc)
+    print("AAD in func = %f" % aad_calc)
+    print("params in AAD: %f %f %f" % (x[0], x[1], x[2]))
     return aad_calc
 
 
@@ -91,14 +82,13 @@ if __name__ == "__main__":
     temps = list(visc[p0].keys())
     visc = list(visc[p0].values())
     test = VFT(temps, visc, x0)
-    print(test.params[0])
-    print(test.params[1])
-    print(test.params[2])
+    print(aadDEF(test.params[:3], test.temps, test.visc_pref))
 
-    t_np = arange(temps[0], temps[-1], 0.5)
+    t_np = arange(temps[0], temps[-1] + 0.1, 0.5)
+    visc_np = [test.calc_visc_def(i) for i in t_np]
 
     fig, ax = plt.subplots()
     ax.plot(temps, visc, "b", label="Expected")
-    ax.plot(t_np, [test.calc_visc_def(i) for i in t_np], "r", label="Calculated")
+    ax.plot(t_np, visc_np, "r", label="Calculated")
     plt.legend()
     plt.show()
