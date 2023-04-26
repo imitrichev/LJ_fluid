@@ -12,7 +12,9 @@ def load_from_directory(dir_path: str, column: int) -> dict[float:dict[float:flo
             for line in text.split('\n'):
                 cur_line = line.split(' ')
                 # Забираем значение из искомой колонки
-                result[p][float(cur_line[0])] = float(cur_line[column])
+                t = float(cur_line[0])
+                val = float(cur_line[column])
+                result[p][t] = val
     return result
 
 
@@ -21,6 +23,28 @@ class ViscData:
         self.density = load_from_directory(dir_path, 2)
         self.visc_k = load_from_directory(dir_path, 3)
         self.visc_d = load_from_directory(dir_path, 4)
+        self.p = list(self.density.keys())
+
+    def get_by_pressure(self, dict_index: int, p: float) -> list[list[float]]:
+        if p not in self.p:
+            raise KeyError(f'{p} not in pressure array')
+        if not 0 <= dict_index <= 2:
+            raise KeyError(f'{dict_index} not in range 0-2')
+        val_dict = [self.density, self.visc_k, self.visc_d][dict_index]
+        t_val_dict = val_dict[p]
+        t_arr = list(t_val_dict.keys())
+        return [[p, t, t_val_dict[t]] for t in t_arr]
+
+    def get_all_points(self, dict_index: int) -> list[list[float]]:
+        if not 0 <= dict_index <= 2:
+            raise KeyError(f'{dict_index} not in range 0-2')
+
+        result = []
+        for p in self.p:
+            t_val_dict = [self.density, self.visc_k, self.visc_d][dict_index]
+            t_arr = list(t_val_dict.keys())
+            result += [[p, t, t_val_dict[t]] for t in t_arr]
+        return result
 
 
 def aad(x_exp, x_calc):
@@ -41,9 +65,6 @@ def aad_new(params: list[float], func: callable, points: list, exp: list[float],
         if static_params:
             result += abs((func(params, static_params, points[i]) - exp[i]) / exp[i])
         else:
-            try:
-                result += abs((func(params, points[i]) - exp[i]) / exp[i])
-            except KeyError:
-                pass
+            result += abs((func(params, points[i]) - exp[i]) / exp[i])
     result *= 100 / len(points)
     return result
