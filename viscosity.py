@@ -1,8 +1,8 @@
-from math import exp
 from common import aad, ViscData, aad_new
 from scipy.optimize import minimize, Bounds
 import matplotlib.pyplot as plt
 from numpy import arange
+from calc_functions import DEF, HG, grunberg_nissan
 
 
 class VFT:
@@ -50,27 +50,11 @@ class VFT:
 
 class MuMix:
     def __init__(self, ):
-        pass
-
-
-def DEF(params, point):
-    d, e, f = params
-    return d * exp(e / (point + 273.15 - f))
-
-
-def HG(params, static_params, point):
-    g0, g1, g2, h = params
-    d, e, f, pref = static_params
-    p, t = point
-    result = DEF([d, e, f], t)
-    top = (p + g0 + g1 * t + g2 * t ** 2)
-    bot = (pref + g0 + g1 * t + g2 * t ** 2)
-    second_part = (top / bot) ** h
-    return result * second_part
+        ...
 
 
 if __name__ == "__main__":
-    substance = "R22"
+    substance = "R115"
     data = ViscData(substance)
     pref = 0.06
 
