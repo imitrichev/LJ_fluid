@@ -1,4 +1,4 @@
-from common import aad, load_from_directory
+from common import aad, load_from_directory, aad_new, ViscData
 from scipy.optimize import minimize
 import matplotlib.pyplot as plt
 from numpy import arange
@@ -18,53 +18,31 @@ class Density:
     def calc_rho2(self, params, p):
         return self.rho0 / (1 - (p - self.p0) / params)
 
-    def calc_rho_full(self, p, t, e=None, beta=None):
-        if not e:
-            e = self.e
-        if not beta:
-            beta = self.beta
+    def calc_rho_full(self, params, point):
+        e, beta = params
+        p, t = point
         return (self.rho0 / (1 + beta * (t - self.t0))) / (1 - (p - self.p0) / e)
 
-    def aad_rho1(self, beta, temp, rho):
-        rho_calc = [self.calc_rho1(i, beta) for i in temp]
-        return aad(rho, rho_calc)
-
-    def aad_rho2(self, e, p, rho):
-        rho_calc = [self.calc_rho2(i, e) for i in p]
-        return aad(rho, rho_calc)
-
-    def aad_rho_full(self, params, rho):
-        e = params[0]
-        beta = params[1]
-        rho_calc = []
-        rho_exp = []
-        for p_cur in list(rho.keys()):
-            for t_cur in list(rho[p_cur].keys()):
-                rho_calc.append(self.calc_rho_full(p_cur, t_cur, e, beta))
-                rho_exp.append(rho[p_cur][t_cur])
-        test = aad(rho_calc, rho_exp)
-        return test
-
-    def setup_rho1(self, temps, rho):
-        args = (temps, rho)
-        test = minimize(fun=self.aad_rho1, x0=0, args=args)
+    def setup_rho1(self, temps: list[float], rho: list[float]):
+        args = (self.calc_rho1, temps, rho)
+        test = minimize(fun=aad_new, x0=0, args=args)
         self.beta = test.x[0]
 
-    def setup_rho2(self, p, rho):
-        args = (p, rho)
-        test = minimize(fun=self.aad_rho2, x0=3, args=args)
+    def setup_rho2(self, p: list[float], rho: list[float]):
+        args = (self.calc_rho2, p, rho)
+        test = minimize(fun=aad_new, x0=3, args=args)
         self.e = test.x[0]
 
-    def setup_rho_full(self, rho):
-        args = (rho)
-        test = minimize(fun=self.aad_rho_full, method='Nelder-Mead', x0=[3, 0], args=args)
+    def setup_rho_full(self, rho, points):
+        args = (self.calc_rho_full, rho, points)
+        test = minimize(fun=aad_new, method='Nelder-Mead', x0=[3, 0], args=args)
         self.e = test.x[0]
         self.beta = test.x[1]
 
 
 if __name__ == "__main__":
     substance = "R22"
-    rho = load_from_directory(substance, 2)
+    rho = ViscData(substance).density
     p = list(rho.keys())
     graph_numb = [0, 0]
     p0 = 0.05
@@ -92,7 +70,7 @@ if __name__ == "__main__":
         graphy = (i + 1) // 4
         graphx = (i + 1) % 4
         exp_temps = list(rho[p_cur].keys())
-        t_arr = arange(exp_temps[0], exp_temps[-1]+0.5, 0.5)
+        t_arr = arange(exp_temps[0], exp_temps[-1] + 0.5, 0.5)
         ax[graphy][graphx].plot(t_arr, [test.calc_rho_full(p_cur, j) for j in t_arr], "r", label="Расчётные значения")
         ax[graphy][graphx].scatter(x=exp_temps, y=list(rho[p_cur].values()), label="Экспериментальные данные")
         ax[graphy][graphx].set_title("p = %.2f MPa" % p_cur)
@@ -101,5 +79,4 @@ if __name__ == "__main__":
         ax[graphy][graphx].legend()
     print("Beta = %f" % test.beta)
     print("E = %f" % test.e)
-    print(test.aad_rho2(test.e, p, rho_p))
     plt.show()
