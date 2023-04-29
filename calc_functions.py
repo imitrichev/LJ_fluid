@@ -27,3 +27,24 @@ def grunberg_nissan(params: list[list[float]], static_params: list[float], point
     visc_sum = sum([x[i] * log(mu[i]) for i in range(2)])
     param_sum = sum([sum([x[i] * x[j] * d[i][j]] for j in range(2)) for i in range(2)])
     return visc_sum + param_sum
+
+
+def rho_t(params, static_params, point):
+    e = params
+    rho0, t0 = static_params
+    t = point
+    return rho0 / (1 + e * (t - t0))
+
+
+def rho_p(params, static_params, point):
+    beta = params
+    rho0, p0 = static_params
+    p = point
+    return rho0 / (1 - (p - p0) / beta)
+
+
+def rho_full(params, static_params, point):
+    beta, e = params
+    rho0, p0, t0 = static_params
+    p, t = point
+    return (rho0 / (1 + beta * (t - t0))) / (1 - (p - p0) / e)
