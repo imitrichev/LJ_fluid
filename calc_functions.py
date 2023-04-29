@@ -2,13 +2,13 @@ from math import exp, log
 
 
 # Params = [D, E, F], point = t
-def DEF(params: list[float], point: float):
+def DEF(params: list[float], point: float) -> float:
     d, e, f = params
     return d * exp(e / (point + 273.15 - f))
 
 
 # Params = [G0, G1, G2, H], Static_Params = все для DEF и pref, point = [p, t]
-def HG(params: list[float], static_params: list[float], point: list[float]):
+def HG(params: list[float], static_params: list[float], point: list[float]) -> float:
     g0, g1, g2, h = params
     d, e, f, pref = static_params
     p, t = point
@@ -20,7 +20,7 @@ def HG(params: list[float], static_params: list[float], point: list[float]):
 
 
 # Params = d, Static_Params = x, point = mu
-def grunberg_nissan(params: list[list[float]], static_params: list[float], point: list[float]):
+def grunberg_nissan(params: list[list[float]], static_params: list[float], point: list[float]) -> float:
     d = params
     x = static_params
     mu = point
@@ -29,21 +29,21 @@ def grunberg_nissan(params: list[list[float]], static_params: list[float], point
     return visc_sum + param_sum
 
 
-def rho_t(params, static_params, point):
+def rho_t(params: float, static_params: list[float], point: float) -> float:
     e = params
     rho0, t0 = static_params
     t = point
     return rho0 / (1 + e * (t - t0))
 
 
-def rho_p(params, static_params, point):
+def rho_p(params: float, static_params: list[float], point: float) -> float:
     beta = params
     rho0, p0 = static_params
     p = point
     return rho0 / (1 - (p - p0) / beta)
 
 
-def rho_full(params, static_params, point):
+def rho_full(params: list[float], static_params: list[float], point: list[float]) -> float:
     beta, e = params
     rho0, p0, t0 = static_params
     p, t = point
