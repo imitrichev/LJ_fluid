@@ -36,9 +36,6 @@ class ViscData:
         t_arr = list(t_val_dict.keys())
         return [[p, t, t_val_dict[t]] for t in t_arr]
 
-    def get_by_temperature(self, dict_inde: int, t: float) -> list[list[float]]:
-
-
     def get_middle_point(self, dict_index: int) -> list[float]:
         if not 0 <= dict_index <= 2:
             raise KeyError(f'{dict_index} not in range 0-2')

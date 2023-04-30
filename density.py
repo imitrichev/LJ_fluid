@@ -20,7 +20,7 @@ class Density:
 
     def calc_rho_full(self, point: list[float]) -> float:
         p, t = point
-        return rho_full([self.beta, self.e], [self.rho0, self.p0, self.t0], [p, t])
+        return rho_full([self.e, self.beta], [self.rho0, self.p0, self.t0], [p, t])
 
     def setup_rho_t(self, temps: list[float], rho: list[float]) -> bool:
         args = (rho_t, temps, rho, [self.rho0, self.t0])

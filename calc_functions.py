@@ -44,7 +44,7 @@ def rho_p(params: float, static_params: list[float], point: float) -> float:
 
 
 def rho_full(params: list[float], static_params: list[float], point: list[float]) -> float:
-    beta, e = params
+    e, beta = params
     rho0, p0, t0 = static_params
     p, t = point
     return (rho0 / (1 + beta * (t - t0))) / (1 - (p - p0) / e)
