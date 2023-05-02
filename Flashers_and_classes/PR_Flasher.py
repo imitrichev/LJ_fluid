@@ -230,7 +230,7 @@ Avg_error_R22 = sum_R22/count
 Avg_error_R115 = sum_R115/count
 
 print('****** Средняя погрешность ******')
-print('Погрешность для R-22:', Avg_error_R22, '; В процентах:',round(Avg_error_R22*100,2),'%')
-print('Погрешность для R-115:', Avg_error_R115, '; В процентах:',round(Avg_error_R115*100,2),'%')
+print('Погрешность для R-22:', Avg_error_R22, '; В процентах:', round(Avg_error_R22*100, 2), '%')
+print('Погрешность для R-115:', Avg_error_R115, '; В процентах:', round(Avg_error_R115*100, 2), '%')
 
 
