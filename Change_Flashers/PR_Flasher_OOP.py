@@ -4,11 +4,7 @@
 # Построить зависимость концентрации от давления
 
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import matplotlib as mpl
-import numpy as np
 from thermo import ChemicalConstantsPackage, CEOSGas, CEOSLiquid, PRMIX, FlashVL
-from thermo.interaction_parameters import IPDB
 from scipy.optimize import minimize
 
 
@@ -45,6 +41,7 @@ def calculate_flash(T, P, fractions, i, j):
         return [PT.gas.zs, T, P, PT.VF, k12, k13, k23]
     else:  # Не только пар
         return [PT.liquid0.zs, T, P, PT.VF, k12, k13, k23]
+
 
 # Функция оптимизации средней ошибки
 def func_opt(parametrs):
