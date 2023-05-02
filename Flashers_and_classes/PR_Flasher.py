@@ -103,10 +103,7 @@ def func_opt(parametrs):
             flasher = FlashVL(constants2, properties, liquid=liquid, gas=gas)
 
             PT = flasher.flash(T=T[i] + 273.15, P=P_bar[i][j] * pow(10, 5), zs=zs)
-            if PT.VF == 1:  # Есть только пар
-                print(PT.gas.zs)
-                print('Неудача')
-            else:  # Не только пар
+            if PT.VF != 1:  # Не только пар
 
                 # Абсолютные ошибки
                 ABS_error_R22 = abs(Fraction_R22[i][j] - PT.liquid0.zs[0])
@@ -126,7 +123,6 @@ def func_opt(parametrs):
 # ================= Оптимизация коэффициентов =================
 # Оптимизируемые коэффициенты для R-22 и R-115
 initial_guess_k13_k23 = [0.21, 0.001, 0.35, 0.001, 0.1, 0.001]
-
 
 result = minimize(func_opt, initial_guess_k13_k23, bounds=((-1, 1), (0, 0.004), (-1, 1), (0, 0.004), (-1, 1), (0, 0.004)))
 if result.success:
@@ -169,12 +165,10 @@ for i in range(len(T)):
 
         PT = flasher.flash(T=T[i] + 273.15, P=P_bar[i][j] * pow(10, 5), zs=zs)
         if PT.VF == 1:  # Есть только пар
-            print(PT.gas.zs)
             print('Неудача')
         else:  # Не только пар
 
             # Добавление точек в листы
-            # Реализуемая модель
             R22_plot.append(PT.liquid0.zs[0])
             R115_plot.append(PT.liquid0.zs[1])
             P_bar_plot.append(P_bar[i][j])
