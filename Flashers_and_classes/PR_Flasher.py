@@ -11,23 +11,20 @@ from thermo import ChemicalConstantsPackage, CEOSGas, CEOSLiquid, PRMIX, FlashVL
 from thermo.interaction_parameters import IPDB
 from scipy.optimize import minimize
 
-# Функция считывания данных из файла в виде списка в списке
-def read_data_from_file_lines(file_path):
+
+def read_data_from_file_lines(file_path):  # Функция считывания данных из файла
     data = []
     with open(file_path, 'r') as f:
-        for line in f:
-            values = line.strip().split(',')
-            data.append([float(v) for v in values])
+        lines = f.readlines()
+        if len(lines) == 1:
+            data = [float(x) for x in lines[0].strip().split(',')]
+        else:
+            for line in lines:
+                values = line.strip().split(',')
+                data.append([float(v) for v in values])
     return data
 
-# Функция считывания данных из файла в виде одномерного массива
-def read_data_from_file_line(file_path):
-    data = []
-    with open(file_path, 'r') as f:
-        for line in f:
-            values = line.strip().split(',')
-            data.extend([float(v) for v in values])
-    return data
+
 # R-22, R-115, Oil (Iso32)
 constants, properties = ChemicalConstantsPackage.from_IDs(['r-22', 'chloropentafluoroethane', 'water'])
 
@@ -43,7 +40,7 @@ constants2 = ChemicalConstantsPackage(MWs=constants.MWs[:-1] + [M_oil], names=co
                                       Tcs=constants.Tcs[:-1] + [T_oil])
 
 # Параметры: массив температур
-T = read_data_from_file_line('../data/temperature.txt')
+T = read_data_from_file_lines('../data/temperature.txt')
 print(T)
 
 # Давление R-22: от -10 градусов до 125
