@@ -38,20 +38,19 @@ constants2 = ChemicalConstantsPackage(MWs=constants.MWs[:-1] + [M_oil], names=co
 T = [-10, 0, 20, 40, 70, 80, 125]
 
 # Давление R-22: от -10 градусов до 125
-P_bar = read_data_from_file('pressure.txt')
-print(P_bar)
+P_bar = read_data_from_file('../data/pressure.txt')
 
 # Вязкость R-22: от -10 градусов до 125
-Viscosity = read_data_from_file('viscosity.txt')
+Viscosity = read_data_from_file('../data/viscosity.txt')
 
 # Плотность R-22:
-Density = read_data_from_file('density.txt')
+Density = read_data_from_file('../data/density.txt')
 
 # Доли R-22 в жидкой фазе
-Fraction_R22 = read_data_from_file('fraction_r22.txt')
+Fraction_R22 = read_data_from_file('../data/fraction_r22.txt')
 
 # Доли R-115 в жидкой фазе
-Fraction_R115 = read_data_from_file('fraction_r115.txt')
+Fraction_R115 = read_data_from_file('../data/fraction_r115.txt')
 
 # Соотношение R-22 к R-115
 # Общее соотношения газа к маслу (распределительный коэффициент)
