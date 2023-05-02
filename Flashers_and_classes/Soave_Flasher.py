@@ -41,7 +41,6 @@ constants2 = ChemicalConstantsPackage(MWs=constants.MWs[:-1] + [M_oil], names=co
 
 # Параметры: массив температур
 T = read_data_from_file_lines('../data/temperature.txt')
-print(T)
 
 # Давление R-22: от -10 градусов до 125
 P_bar = read_data_from_file_lines('../data/pressure.txt')
