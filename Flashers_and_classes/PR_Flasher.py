@@ -25,6 +25,43 @@ def read_data_from_file_lines(file_path):  # Функция считывания
     return data
 
 
+def func_opt(parametrs):  # Функция оптимизации средней ошибки
+    # Счетчик точек и суммы концентраций
+    count = 0
+    sum_R22 = 0
+    sum_R115 = 0
+    for i in range(len(T)):
+        for j in range(len(P_bar[i])):
+            k13 = parametrs[0] + (T[i] - T[0]) * parametrs[1]
+            k23 = parametrs[2] + (T[i] - T[0]) * parametrs[3]
+            k12 = parametrs[4] + (T[i]-T[0]) * parametrs[5]
+            kijs = [[0, k12, k13],
+                    [k12, 0, k23],
+                    [k13, k23, 0]]
+
+            eos_kwargs = {'Pcs': constants2.Pcs, 'Tcs': constants2.Tcs, 'omegas': constants2.omegas, 'kijs': kijs}
+            gas = CEOSGas(SRKMIX, eos_kwargs=eos_kwargs)
+            liquid = CEOSLiquid(SRKMIX, eos_kwargs=eos_kwargs)
+            flasher = FlashVL(constants2, properties, liquid=liquid, gas=gas)
+
+            PT = flasher.flash(T=T[i] + 273.15, P=P_bar[i][j] * pow(10, 5), zs=zs)
+            if PT.VF != 1:  # Не только пар
+
+                # Абсолютные ошибки
+                ABS_error_R22 = abs(Fraction_R22[i][j] - PT.liquid0.zs[0])
+                ABS_error_R115 = abs(Fraction_R115[i][j] - PT.liquid0.zs[1])
+
+                # Счетчик точек
+                count += 1
+                sum_R22 += ABS_error_R22
+                sum_R115 += ABS_error_R115
+
+    # Средняя ошибка
+    Avg_error_R22 = sum_R22 / count
+    Avg_error_R115 = sum_R115 / count
+    return Avg_error_R115 + Avg_error_R22
+
+
 # R-22, R-115, Oil (Iso32)
 constants, properties = ChemicalConstantsPackage.from_IDs(['r-22', 'chloropentafluoroethane', 'water'])
 
@@ -62,47 +99,6 @@ Fraction_R115 = read_data_from_file_lines('../data/fraction_r115.txt')
 g = 0.8
 zs = [0.488 * g, 0.512 * g, 1 - g]
 # zs = [0.488, 0.512]
-
-
-# Функция оптимизации средней ошибки
-def func_opt(parametrs):
-    # Счетчик точек и суммы концентраций
-    count = 0
-    sum_R22 = 0
-    sum_R115 = 0
-    for i in range(len(T)):
-        for j in range(len(P_bar[i])):
-
-            # kij значения для газов и масла
-            k13 = parametrs[0] + (T[i] - T[0]) * parametrs[1]
-            k23 = parametrs[2] + (T[i] - T[0]) * parametrs[3]
-            k12 = parametrs[4] + (T[i] - T[0]) * parametrs[5]
-            kijs = [[0, k12, k13],
-                    [k12, 0, k23],
-                    [k13, k23, 0]]
-
-            eos_kwargs = {'Pcs': constants2.Pcs, 'Tcs': constants2.Tcs, 'omegas': constants2.omegas, 'kijs': kijs}
-            gas = CEOSGas(PRMIX, eos_kwargs=eos_kwargs)
-            liquid = CEOSLiquid(PRMIX, eos_kwargs=eos_kwargs)
-            flasher = FlashVL(constants2, properties, liquid=liquid, gas=gas)
-
-            PT = flasher.flash(T=T[i] + 273.15, P=P_bar[i][j] * pow(10, 5), zs=zs)
-            if PT.VF != 1:  # Не только пар
-
-                # Абсолютные ошибки
-                ABS_error_R22 = abs(Fraction_R22[i][j] - PT.liquid0.zs[0])
-                ABS_error_R115 = abs(Fraction_R115[i][j] - PT.liquid0.zs[1])
-
-                # Счетчик точек
-                count += 1
-                sum_R22 += ABS_error_R22
-                sum_R115 += ABS_error_R115
-
-    # Средняя ошибка
-    Avg_error_R22 = sum_R22 / count
-    Avg_error_R115 = sum_R115 / count
-    return Avg_error_R115 + Avg_error_R22
-
 
 # ================= Оптимизация коэффициентов =================
 # Оптимизируемые коэффициенты для R-22 и R-115
