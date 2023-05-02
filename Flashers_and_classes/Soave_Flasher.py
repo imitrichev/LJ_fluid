@@ -100,10 +100,7 @@ def func_opt(parametrs):
             flasher = FlashVL(constants2, properties, liquid=liquid, gas=gas)
 
             PT = flasher.flash(T=T[i] + 273.15, P=P_bar[i][j] * pow(10, 5), zs=zs)
-            if PT.VF == 1:  # Есть только пар
-                print(PT.gas.zs)
-                print('Неудача')
-            else:  # Не только пар
+            if PT.VF != 1:  # Есть только пар
 
                 # Абсолютные ошибки
                 ABS_error_R22 = abs(Fraction_R22[i][j] - PT.liquid0.zs[0])
