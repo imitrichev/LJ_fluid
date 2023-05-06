@@ -42,15 +42,18 @@ def func_opt(parametrs):  # Функция оптимизации средней
 
             PT = flasher.flash(T=T[i] + 273.15, P=P_bar[i][j] * pow(10, 5), zs=zs)
             if PT.VF != 1:  # Не только пар
-
+                
                 # Абсолютные ошибки
                 ABS_error_R22 = abs(Fraction_R22[i][j] - PT.liquid0.zs[0])
                 ABS_error_R115 = abs(Fraction_R115[i][j] - PT.liquid0.zs[1])
-
-                # Счетчик точек
-                count += 1
-                sum_R22 += ABS_error_R22
-                sum_R115 += ABS_error_R115
+            else:
+                ABS_error_R22 = abs(Fraction_R22[i][j] - 0.0)
+                ABS_error_R115 = abs(Fraction_R115[i][j] - 0.0)
+            
+            # Счетчик точек
+            count += 1
+            sum_R22 += ABS_error_R22
+            sum_R115 += ABS_error_R115
 
     # Средняя ошибка
     Avg_error_R22 = sum_R22 / count
@@ -145,44 +148,47 @@ for i in range(len(T)):
             print('Температура расчета:', T[i], '°C; Давление расчета:', P_bar[i][j], 'Бар')
             print('Соотношение компонентов смеси в газе R-22, R-115, ISO 32:', PT.gas.zs)
             print('Пар ', PT.VF, '\n')
+            calculated[0]=0.0
+            calculated[1]=0.0
         else:  # Не только пар
-
-            # Добавление точек в листы
-            # Реализуемая модель
-            R22_plot.append(PT.liquid0.zs[0])
-            R115_plot.append(PT.liquid0.zs[1])
-            P_bar_plot.append(P_bar[i][j])
-            # Экспериментальные (исходные) данные
-            Fraction_R22_plot.append(Fraction_R22[i][j])
-            Fraction_R115_plot.append(Fraction_R115[i][j])
-
-            # Абсолютные ошибки
-            ABS_error_R22 = abs(Fraction_R22[i][j] - PT.liquid0.zs[0])
-            ABS_error_R115 = abs(Fraction_R115[i][j] - PT.liquid0.zs[1])
-
-            # Относительные ошибки
-            Rel_error_R22 = ABS_error_R22/PT.liquid0.zs[0]
-            Rel_error_R115 = ABS_error_R115 / PT.liquid0.zs[1]
-
-            # Счетчик точек
-            count += 1
-            countT += 1
-            sum_R22T += ABS_error_R22
-            sum_R115T += ABS_error_R115
-
-            sum_R22 += ABS_error_R22
-            sum_R115 += ABS_error_R115
-
             print('==============================================================================')
             print('Температура расчета:', T[i], '°C; Давление расчета:', P_bar[i][j], 'Бар')
             print('Соотношение компонентов смеси R-22, R-115, ISO 32:', PT.liquid0.zs)
             print('Пар ', PT.VF)
-            print('****** Абсолютная погрешность ******')
-            print('Погрешность для R-22:', ABS_error_R22)
-            print('Погрешность для R-115:', ABS_error_R115)
-            print('****** Относительная погрешность ******')
-            print('Погрешность для R-22:', Rel_error_R22)
-            print('Погрешность для R-115:', Rel_error_R115, '\n')
+            calculated[0]=PT.liquid0.zs[0]
+            calculated[1]=PT.liquid0.zs[1]
+        # Добавление точек в листы
+        # Реализуемая модель
+        R22_plot.append(calculated[0])
+        R115_plot.append(calculated[1])
+        P_bar_plot.append(P_bar[i][j])
+        # Экспериментальные (исходные) данные
+        Fraction_R22_plot.append(Fraction_R22[i][j])
+        Fraction_R115_plot.append(Fraction_R115[i][j])
+
+        # Абсолютные ошибки
+        ABS_error_R22 = abs(Fraction_R22[i][j] - calculated[0])
+        ABS_error_R115 = abs(Fraction_R115[i][j] - calculated[1])
+
+        # Относительные ошибки
+        Rel_error_R22 = ABS_error_R22/calculated[0]
+        Rel_error_R115 = ABS_error_R115 / calculated[1]
+
+        # Счетчик точек
+        count += 1
+        countT += 1
+        sum_R22T += ABS_error_R22
+        sum_R115T += ABS_error_R115
+
+        sum_R22 += ABS_error_R22
+        sum_R115 += ABS_error_R115
+
+        print('****** Абсолютная погрешность ******')
+        print('Погрешность для R-22:', ABS_error_R22)
+        print('Погрешность для R-115:', ABS_error_R115)
+        print('****** Относительная погрешность ******')
+        print('Погрешность для R-22:', Rel_error_R22)
+        print('Погрешность для R-115:', Rel_error_R115, '\n')
 
     print('****** Значения kijs ******')
     print('k12=', k12)
